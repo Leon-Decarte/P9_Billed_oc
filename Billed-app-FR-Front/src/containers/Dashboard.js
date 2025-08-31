@@ -32,7 +32,7 @@ export const card = (bill) => {
   const firstName = firstAndLastNames.includes('.') ?
     firstAndLastNames.split('.')[0] : ''
   const lastName = firstAndLastNames.includes('.') ?
-  firstAndLastNames.split('.')[1] : firstAndLastNames
+    firstAndLastNames.split('.')[1] : firstAndLastNames
 
   return (`
     <div class='bill-card' id='open-bill${bill.id}' data-testid='open-bill${bill.id}'>
@@ -95,7 +95,7 @@ export default class {
       $(`#open-bill${bill.id}`).css({ background: '#2A2B35' })
       $('.dashboard-right-container div').html(DashboardFormUI(bill))
       $('.vertical-navbar').css({ height: '150vh' })
-      this.counter ++
+      this.counter++
     } else {
       $(`#open-bill${bill.id}`).css({ background: '#0D5AE5' })
 
@@ -103,71 +103,81 @@ export default class {
         <div id="big-billed-icon" data-testid="big-billed-icon"> ${BigBilledIcon} </div>
       `)
       $('.vertical-navbar').css({ height: '120vh' })
-      this.counter ++
+      this.counter++
     }
-    $('#icon-eye-d').click(this.handleClickIconEye)
-    $('#btn-accept-bill').click((e) => this.handleAcceptSubmit(e, bill))
-    $('#btn-refuse-bill').click((e) => this.handleRefuseSubmit(e, bill))
+    $('#icon-eye-d').off('click').on('click', this.handleClickIconEye)
+    $('#btn-accept-bill').off('click').on('click', (e) => this.handleAcceptSubmit(e, bill))
+    $('#btn-refuse-bill').off('click').on('click', (e) => this.handleRefuseSubmit(e, bill))
+
   }
 
   handleAcceptSubmit = (e, bill) => {
+    e.preventDefault()
     const newBill = {
       ...bill,
       status: 'accepted',
       commentAdmin: $('#commentary2').val()
     }
     this.updateBill(newBill)
-    this.onNavigate(ROUTES_PATH['Dashboard'])
+      .then(() => {
+        this.onNavigate(ROUTES_PATH['Dashboard'])
+      })
+      .catch(err => console.error('update accept error', err))
   }
 
   handleRefuseSubmit = (e, bill) => {
+    e.preventDefault()
     const newBill = {
       ...bill,
       status: 'refused',
       commentAdmin: $('#commentary2').val()
     }
     this.updateBill(newBill)
-    this.onNavigate(ROUTES_PATH['Dashboard'])
+      .then(() => {
+        this.onNavigate(ROUTES_PATH['Dashboard'])
+      })
+      .catch(err => console.error('update refuse error', err))
   }
+
 
   handleShowTickets(e, bills, index) {
-  const container = $(`#status-bills-container${index}`)
-  const isOpen = container.html().trim() !== ""
+    const container = $(`#status-bills-container${index}`)
+    const isOpen = container.html().trim() !== ""
 
-  if (!isOpen) {
-    $(`#arrow-icon${index}`).css({ transform: 'rotate(0deg)' })
-    container.html(cards(filteredBills(bills, getStatus(index))))
-  } else {
-    $(`#arrow-icon${index}`).css({ transform: 'rotate(90deg)' })
-    container.html("")
+    if (!isOpen) {
+      $(`#arrow-icon${index}`).css({ transform: 'rotate(0deg)' })
+      container.html(cards(filteredBills(bills, getStatus(index))))
+    } else {
+      $(`#arrow-icon${index}`).css({ transform: 'rotate(90deg)' })
+      container.html("")
+    }
+
+    bills.forEach(bill => {
+      $(`#open-bill${bill.id}`).off("click").on("click", (e) =>
+        this.handleEditTicket(e, bill, bills)
+      )
+    })
   }
-
-  bills.forEach(bill => {
-    $(`#open-bill${bill.id}`).off("click").on("click", (e) =>
-      this.handleEditTicket(e, bill, bills)
-    )
-  })
-}
 
 
   getBillsAllUsers = () => {
     if (this.store) {
       return this.store
-      .bills()
-      .list()
-      .then(snapshot => {
-        const bills = snapshot
-        .map(doc => ({
-          id: doc.id,
-          ...doc,
-          date: doc.date,
-          status: doc.status
-        }))
-        return bills
-      })
-      .catch(error => {
-        throw error;
-      })
+        .bills()
+        .list()
+        .then(snapshot => {
+          const bills = snapshot
+            .map(doc => ({
+              id: doc.id,
+              ...doc,
+              date: doc.date,
+              status: doc.status
+            }))
+          return bills
+        })
+        .catch(error => {
+          throw error;
+        })
     }
   }
 
@@ -175,11 +185,11 @@ export default class {
   /* istanbul ignore next */
   updateBill = (bill) => {
     if (this.store) {
-    return this.store
-      .bills()
-      .update({data: JSON.stringify(bill), selector: bill.id})
-      .then(bill => bill)
-      .catch(console.log)
+      return this.store
+        .bills()
+        .update({ data: JSON.stringify(bill), selector: bill.id })
+        .then(bill => bill)
+        .catch(console.log)
     }
   }
 }

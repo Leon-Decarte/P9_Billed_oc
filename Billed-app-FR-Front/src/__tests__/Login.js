@@ -228,3 +228,53 @@ describe("Given that I am a user on login page", () => {
     });
   });
 });
+
+//
+// ✅ Additional tests for missing coverage
+//
+describe("Login error and edge cases", () => {
+  beforeEach(() => {
+    document.body.innerHTML = LoginUI();
+  });
+
+  test("When login() rejects, createUser() should be called", async () => {
+    const user = {
+      type: "Employee",
+      email: "fail@email.com",
+      password: "pass",
+      status: "connected"
+    }
+
+    const store = {
+      login: jest.fn(() => Promise.reject("API error")),
+      users: () => ({
+        create: jest.fn(() => Promise.resolve())
+      })
+    }
+
+    const onNavigate = jest.fn()
+    const login = new Login({ document, localStorage: window.localStorage, onNavigate, PREVIOUS_LOCATION: "", store })
+
+    const createUserSpy = jest.spyOn(login, "createUser").mockResolvedValueOnce({})
+
+    const form = screen.getByTestId("form-employee")
+    screen.getByTestId("employee-email-input").value = user.email
+    screen.getByTestId("employee-password-input").value = user.password
+    fireEvent.submit(form)
+
+    await new Promise(process.nextTick)
+    expect(createUserSpy).toHaveBeenCalledWith(user)
+  })
+
+  test("When no store is provided, login() should return null", () => {
+    const login = new Login({ document, localStorage: window.localStorage, onNavigate: jest.fn(), PREVIOUS_LOCATION: "", store: null })
+    const result = login.login({ email: "a@a", password: "123" })
+    expect(result).toBeNull()
+  })
+
+  test("When no store is provided, createUser() should return null", () => {
+    const login = new Login({ document, localStorage: window.localStorage, onNavigate: jest.fn(), PREVIOUS_LOCATION: "", store: null })
+    const result = login.createUser({ email: "a@a", password: "123", type: "Employee" })
+    expect(result).toBeNull()
+  })
+})
